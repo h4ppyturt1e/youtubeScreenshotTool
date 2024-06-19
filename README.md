@@ -56,3 +56,6 @@ This project captures screenshots from a YouTube video at specified intervals an
 ## Contributing
 
 Contributions are welcome! Please fork the repository and submit a pull request for any improvements or bug fixes.
+
+## License
+See the [LICENSE](LICENSE) file for license rights and limitations (MIT).
