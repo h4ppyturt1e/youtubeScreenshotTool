@@ -7,7 +7,7 @@ from skimage.metrics import structural_similarity as ssim
 
 
 class ProcessImages:
-    def __init__(self, input_directory):
+    def __init__(self, input_directory, force_grayscale=True, similarity_level=0.8, force_unique=True):
         self.input_directory = input_directory
         self.original_images = self._get_image_paths()
         self.sanitized_images = []
@@ -19,8 +19,8 @@ class ProcessImages:
         self.crop_points = self.select_crop_area()
         if self.crop_points:
             self.crop_all_images()
-        self.convert_to_grayscale()
-        self.remove_duplicates()
+        self.convert_to_grayscale(force_grayscale=force_grayscale)
+        self.remove_duplicates(similarity_level=similarity_level, force_unique=force_unique)
         
     def _get_image_paths(self):
         return [os.path.join(self.input_directory, f) for f in os.listdir(self.input_directory) if f.endswith(('.png', '.jpg', '.jpeg'))]
@@ -120,8 +120,8 @@ class ProcessImages:
                     else:
                         crop_points.clear()
                 else:
-                    print("Crop area not selected properly, exiting...")
-                    exit(1)
+                    print("Crop area not selected properly, assuming full image.")
+                    return (0, 0, image.shape[1], image.shape[0])
         else:
             print("No images found in the directory.")
             return None
@@ -145,7 +145,12 @@ class ProcessImages:
             os.remove(image_path)
         os.rmdir(f"{self.input_directory}_sanitized")
 
-    def convert_to_grayscale(self):
+    def convert_to_grayscale(self, force_grayscale=True):
+        if not force_grayscale:
+            print("Skipping grayscale conversion...")
+            self.grayscaled_images = self.cropped_images
+            return
+        
         output_directory = f"{self.input_directory}_grayscale"
         os.makedirs(output_directory, exist_ok=True)
 
@@ -164,7 +169,12 @@ class ProcessImages:
             os.remove(image_path)
         os.rmdir(f"{self.input_directory}_cropped")
 
-    def remove_duplicates(self, similarity_level=0.8):
+    def remove_duplicates(self, similarity_level=0.8, force_unique=True):
+        if not force_unique:
+            print("Skipping duplicates removal...")
+            self.unique_images = self.grayscaled_images
+            return
+        
         output_directory = f"{self.input_directory}_unique"
         os.makedirs(output_directory, exist_ok=True)
 
