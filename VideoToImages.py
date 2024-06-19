@@ -59,6 +59,7 @@ class VideoToImages:
         self.create_output_directory()
         self.capture_screenshots()
         self.cleanup()
+        return self.output_dir
 
 
 if __name__ == "__main__":

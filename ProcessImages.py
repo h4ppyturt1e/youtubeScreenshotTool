@@ -140,7 +140,26 @@ class ProcessImages:
             os.remove(image_path)
         os.rmdir(f"{self.input_directory}_sanitized")
 
+    def convert_to_grayscale(self):
+        output_directory = f"{self.input_directory}_grayscale"
+        os.makedirs(output_directory, exist_ok=True)
+
+        for image_path, image in self.cropped_images:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            output_path = os.path.join(
+                output_directory, os.path.basename(image_path))
+            cv2.imwrite(output_path, gray)
+
+        print(
+            f"Images converted to grayscale and saved to {output_directory}...")
+        print(
+            f"Deleting cropped images directory: {self.input_directory}_cropped")
+        for image_path, _ in self.cropped_images:
+            os.remove(image_path)
+        os.rmdir(f"{self.input_directory}_cropped")
+
 
 if __name__ == "__main__":
     input_directory = "./outputs/remember_me_coco_20240618_185653"
     sanitizer = ProcessImages(input_directory)
+    sanitizer.convert_to_grayscale()
