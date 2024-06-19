@@ -63,8 +63,8 @@ class VideoToImages:
 
 
 if __name__ == "__main__":
-    youtube_url = "https://www.youtube.com/watch?v=YOUR_VIDEO_ID"
-    interval = 5  # Capture a screenshot every 5 seconds
+    youtube_url = "https://www.youtube.com/watch?v=ZrV8YYwKvSs"
+    interval = 5
     output_base_dir = "./outputs"
     output_name = "screenshot_directory"
 

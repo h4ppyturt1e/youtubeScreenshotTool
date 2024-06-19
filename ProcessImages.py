@@ -3,18 +3,25 @@ import cv2
 import numpy as np
 import tkinter as tk
 from tkinter import messagebox
+from skimage.metrics import structural_similarity as ssim
 
 
 class ProcessImages:
     def __init__(self, input_directory):
         self.input_directory = input_directory
+        self.original_images = self._get_image_paths()
         self.sanitized_images = []
+        self.cropped_images = []
+        self.grayscaled_images = []
+        self.unique_images = []
+        
         self.sanitize_directory()
         self.crop_points = self.select_crop_area()
-        self.cropped_images = []
         if self.crop_points:
             self.crop_all_images()
-
+        self.convert_to_grayscale()
+        self.remove_duplicates()
+        
     def _get_image_paths(self):
         return [os.path.join(self.input_directory, f) for f in os.listdir(self.input_directory) if f.endswith(('.png', '.jpg', '.jpeg'))]
 
@@ -81,9 +88,7 @@ class ProcessImages:
             root.destroy()
 
             if result == 'yes':
-                print(
-                    f"Selected crop area: P1({x1}, {y1}), P2({x2}, {y2}), W={w}, H={h}")
-                return (x, y, w, h)
+                return (x-border_size, y-border_size, w, h)
             return None
 
         crop_points = []
@@ -115,8 +120,8 @@ class ProcessImages:
                     else:
                         crop_points.clear()
                 else:
-                    print("Crop area not selected properly.")
-                    break
+                    print("Crop area not selected properly, exiting...")
+                    exit(1)
         else:
             print("No images found in the directory.")
             return None
@@ -135,7 +140,7 @@ class ProcessImages:
 
         print(f"Images cropped and saved to {output_directory}...")
         print(
-            f"Deleting sanitized images directory: {self.input_directory}_sanitized")
+            "Deleting sanitized images directory...")
         for image_path, _ in self.sanitized_images:
             os.remove(image_path)
         os.rmdir(f"{self.input_directory}_sanitized")
@@ -149,17 +154,44 @@ class ProcessImages:
             output_path = os.path.join(
                 output_directory, os.path.basename(image_path))
             cv2.imwrite(output_path, gray)
+            self.grayscaled_images.append((output_path, gray))
 
         print(
             f"Images converted to grayscale and saved to {output_directory}...")
         print(
-            f"Deleting cropped images directory: {self.input_directory}_cropped")
+            "Deleting cropped images directory...")
         for image_path, _ in self.cropped_images:
             os.remove(image_path)
         os.rmdir(f"{self.input_directory}_cropped")
 
+    def remove_duplicates(self, similarity_level=0.8):
+        output_directory = f"{self.input_directory}_unique"
+        os.makedirs(output_directory, exist_ok=True)
+
+        self.unique_images = []
+        for i, (image_path, image) in enumerate(self.grayscaled_images):
+            is_duplicate = False
+            if self.unique_images:
+                last_unique_image = self.unique_images[-1][1]
+                similarity_index, _ = ssim(image, last_unique_image, full=True)
+                if similarity_index >= similarity_level:
+                    is_duplicate = True
+
+            if not is_duplicate:
+                output_path = os.path.join(output_directory, os.path.basename(image_path))
+                cv2.imwrite(output_path, image)
+                self.unique_images.append((output_path, image))
+
+        print(f"Unique images saved to {output_directory}...")
+        print("Deleting grayscale images directory...")
+        for image_path, _ in self.grayscaled_images:
+            os.remove(image_path)
+        os.rmdir(f"{self.input_directory}_grayscale")
+
+        print(f"Found {len(self.unique_images)} unique images out of {len(self.original_images)} total images.")
 
 if __name__ == "__main__":
-    input_directory = "./outputs/remember_me_coco_20240618_185653"
+    input_directory = "./outputs/remember_me_coco/remember_me_coco_20240618_201918"
     sanitizer = ProcessImages(input_directory)
     sanitizer.convert_to_grayscale()
+    sanitizer.remove_duplicates()

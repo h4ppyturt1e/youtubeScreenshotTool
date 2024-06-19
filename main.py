@@ -4,7 +4,7 @@ import os
 
 def main():
     youtube_url = "https://www.youtube.com/watch?v=ZrV8YYwKvSs"
-    interval = 1
+    interval = 2
     output_base_dir = "./outputs"
     output_name = "remember_me_coco"
 
@@ -13,8 +13,7 @@ def main():
     raw_screenshots_dir = video_to_images.run()
 
     input_directory = f"{raw_screenshots_dir}"
-    sanitizer = ProcessImages(input_directory)
-    sanitizer.convert_to_grayscale()
+    image_processor = ProcessImages(input_directory)
 
 if __name__ == "__main__":
     main()
