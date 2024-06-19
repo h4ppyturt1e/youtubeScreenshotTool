@@ -3,6 +3,7 @@ import cv2
 from pytube import YouTube
 from datetime import datetime
 
+
 class VideoToImages:
     def __init__(self, youtube_url, interval, output_base_dir, output_name):
         self.youtube_url = youtube_url
@@ -13,13 +14,15 @@ class VideoToImages:
 
     def create_output_directory(self):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.output_dir = os.path.join(self.output_base_dir, f"{self.output_name}_{timestamp}")
+        self.output_dir = os.path.join(
+            self.output_base_dir, f"{self.output_name}_{timestamp}")
         os.makedirs(self.output_dir, exist_ok=True)
         return self.output_dir
 
     def download_video(self):
         yt = YouTube(self.youtube_url)
-        video = yt.streams.filter(progressive=True, file_extension='mp4').first()
+        video = yt.streams.filter(
+            progressive=True, file_extension='mp4').first()
         self.video_path = video.download(filename='temp_video.mp4')
         return self.video_path
 
@@ -37,7 +40,8 @@ class VideoToImages:
                 break
 
             if frame_count % frame_interval == 0:
-                screenshot_path = os.path.join(self.output_dir, f"screenshot_{screenshot_count:04d}.png")
+                screenshot_path = os.path.join(
+                    self.output_dir, f"screenshot_{screenshot_count:04d}.png")
                 cv2.imwrite(screenshot_path, frame)
                 screenshot_count += 1
 
@@ -56,11 +60,13 @@ class VideoToImages:
         self.capture_screenshots()
         self.cleanup()
 
+
 if __name__ == "__main__":
     youtube_url = "https://www.youtube.com/watch?v=YOUR_VIDEO_ID"
     interval = 5  # Capture a screenshot every 5 seconds
     output_base_dir = "./outputs"
     output_name = "screenshot_directory"
 
-    video_to_images = VideoToImages(youtube_url, interval, output_base_dir, output_name)
+    video_to_images = VideoToImages(
+        youtube_url, interval, output_base_dir, output_name)
     video_to_images.run()
