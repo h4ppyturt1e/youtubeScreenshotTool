@@ -1,7 +1,7 @@
 import os
 import argparse
-from ProcessImages import ProcessImages
-from VideoToImages import VideoToImages
+from src.ProcessImages import ProcessImages
+from src.VideoToImages import VideoToImages
 
 
 def main():
