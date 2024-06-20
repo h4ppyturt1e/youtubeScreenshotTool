@@ -20,6 +20,9 @@ def main():
     parser.add_argument('--unique', type=int,
                         help='Removes duplicate images (0 or 1)')
 
+    parser.add_argument('--start-time', type=int, help='Start capturing screenshots at this time (in seconds)', default=None)
+    parser.add_argument('--end-time', type=int, help='End capturing screenshots at this time (in seconds)', default=None)
+
     args = parser.parse_args()
 
     youtube_url = args.youtube_url
@@ -27,8 +30,10 @@ def main():
     output_base_dir = "./outputs"
     output_name = args.output_name
 
+
     video_to_images = VideoToImages(
-        youtube_url, interval, os.path.join(output_base_dir, output_name), output_name)
+        youtube_url, interval, os.path.join(output_base_dir, output_name), output_name, args.start_time, args.end_time)
+
     raw_screenshots_dir = video_to_images.run()
 
     input_directory = f"{raw_screenshots_dir}"

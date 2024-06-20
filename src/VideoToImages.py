@@ -5,12 +5,15 @@ from datetime import datetime
 
 
 class VideoToImages:
-    def __init__(self, youtube_url, interval, output_base_dir, output_name):
+    def __init__(self, youtube_url, interval, output_base_dir, output_name, start_time, end_time):
         self.youtube_url = youtube_url
         self.interval = interval
         self.output_base_dir = output_base_dir
         self.output_name = output_name
         self.video_path = None
+        self.start_time = start_time
+        self.end_time = end_time
+        
 
     def create_output_directory(self):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -29,12 +32,18 @@ class VideoToImages:
     def capture_screenshots(self):
         cap = cv2.VideoCapture(self.video_path)
         fps = cap.get(cv2.CAP_PROP_FPS)
+
         frame_interval = int(fps * self.interval)
+
+		# Set the start time of the video
+        if self.start_time:
+            cap.set(cv2.CAP_PROP_POS_MSEC, self.start_time * 1000)
 
         frame_count = 0
         screenshot_count = 0
 
-        while cap.isOpened():
+		# Set the end time of the video if specified, otherwise capture all frames
+        while cap.isOpened() and (self.end_time is None or cap.get(cv2.CAP_PROP_POS_MSEC) < self.end_time * 1000):
             ret, frame = cap.read()
             if not ret:
                 break
