@@ -11,8 +11,8 @@ class VideoToImages:
         self.output_base_dir = output_base_dir
         self.output_name = output_name
         self.video_path = None
-        self.start_time = start_time
-        self.end_time = end_time
+        self.start_time = self.human_readable_length(start_time) 
+        self.end_time = self.human_readable_length(end_time)
         
 
     def create_output_directory(self):
@@ -58,6 +58,27 @@ class VideoToImages:
 
         cap.release()
         cv2.destroyAllWindows()
+    
+    
+    def human_readable_length(self,time: str):
+
+        if time is None:
+            return None
+
+        time = time.split(":")
+
+        if len(time) == 1:
+            return int(time[0])
+
+        if len(time) == 2:
+            return int(time[0]) * 60 + int(time[1])
+
+        if len(time) == 3:
+            return int(time[0]) * 3600 + int(time[1]) * 60 + int(time[2])
+
+        return None
+
+
 
     def cleanup(self):
         if self.video_path and os.path.exists(self.video_path):
@@ -69,6 +90,7 @@ class VideoToImages:
         self.capture_screenshots()
         self.cleanup()
         return self.output_dir
+
 
 
 if __name__ == "__main__":

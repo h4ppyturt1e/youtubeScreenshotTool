@@ -3,7 +3,6 @@ import argparse
 from src.ProcessImages import ProcessImages
 from src.VideoToImages import VideoToImages
 
-
 def main():
     parser = argparse.ArgumentParser(
         description='Process video to images and then sanitize images.')
@@ -20,8 +19,9 @@ def main():
     parser.add_argument('--unique', type=int,
                         help='Removes duplicate images (0 or 1)')
 
-    parser.add_argument('--start-time', type=int, help='Start capturing screenshots at this time (in seconds)', default=None)
-    parser.add_argument('--end-time', type=int, help='End capturing screenshots at this time (in seconds)', default=None)
+    parser.add_argument('--start-time', type=str, help='Start capturing at a specified time. Format: MINUTES:SECONDS', default=None)
+    parser.add_argument('--end-time', type=str, help='End capturing screenshots at this time. Format: MINUTES:SECONDS ', default=None)
+
 
     args = parser.parse_args()
 
@@ -29,6 +29,7 @@ def main():
     interval = args.interval
     output_base_dir = "./outputs"
     output_name = args.output_name
+
 
 
     video_to_images = VideoToImages(
