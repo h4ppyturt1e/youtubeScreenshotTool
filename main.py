@@ -2,6 +2,7 @@ import os
 import argparse
 from src.ProcessImages import ProcessImages
 from src.VideoToImages import VideoToImages
+from src.ImageMatching import StitchDirectory  # Make sure to update your import path accordingly
 
 
 def main():
@@ -14,15 +15,25 @@ def main():
     parser.add_argument('output_name', type=str,
                         help='Name of the output directory')
     parser.add_argument('--gray', type=int,
-                        help='Do grayscale conversion (0 or 1)')
+                        help='Do grayscale conversion (0 or 1)', default=1)
     parser.add_argument('--sim', type=float,
                         help='Similarity level for removing duplicates (0.0 to 1.0)', default=0.8)
     parser.add_argument('--unique', type=int,
-                        help='Removes duplicate images (0 or 1)')
+                        help='Removes duplicate images (0 or 1)', default=1)
     parser.add_argument('--start-time', type=str,
                         help='Start capturing at a specified time. Format: MINUTES:SECONDS', default=None)
     parser.add_argument('--end-time', type=str,
                         help='End capturing screenshots at this time. Format: MINUTES:SECONDS ', default=None)
+    parser.add_argument('--stitch', type=int,
+                        help='Enable stitching of images (0 or 1)', default=1)
+    parser.add_argument('--overlap', type=int,
+                        help='Overlap region for stitching', default=300)
+    parser.add_argument('--threshold', type=int,
+                        help='Threshold for formatting stitched image', default=1000)
+    parser.add_argument('--padding', type=int,
+                        help='Padding for formatted stitched image', default=10)
+    parser.add_argument('--pdf', type=int,
+                        help='Convert stitched image to PDF (0 or 1)', default=0)
 
     args = parser.parse_args()
 
@@ -42,6 +53,17 @@ def main():
 
     print("Finished processing images...")
 
+    if args.stitch and args.unique:
+        stitcher = StitchDirectory(f"{input_directory}_unique", overlap_region=args.overlap)
+        stitcher.stitch_images(do_plot=False)
+
+        if args.threshold or args.padding:
+            formatted_img = stitcher.format_stitched_image(threshold=args.threshold, padding=args.padding)
+
+            if args.pdf:
+                stitcher.convert_to_pdf(formatted_img)
+
+        print("Finished stitching images...")
 
 if __name__ == "__main__":
     main()
