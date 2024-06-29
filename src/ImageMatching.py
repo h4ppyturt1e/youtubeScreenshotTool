@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter
-
+from PIL import Image
 
 class ImageMatching:
     """Matches and stitches two images together"""
@@ -210,7 +210,46 @@ class StitchDirectory:
         print(f"Final stitched image saved as {final_output_path}")
         
         self.delete_temp_files()
+        
+        self.stitched_directory_image = final_output_path
 
+    def format_stitched_image(self, threshold=1000, padding=20):
+        stitched_image = cv2.imread(self.stitched_directory_image, cv2.IMREAD_GRAYSCALE)
+        if stitched_image is None:
+            raise ValueError(f"Failed to load stitched image at {self.stitched_directory_image}")
+        
+        height, width = stitched_image.shape
+        num_sections = (width + threshold - 1) // threshold  # Round up division
+
+        section_width = threshold + 2 * padding
+        section_height = height + 2 * padding
+        formatted_height = section_height * num_sections - padding * (num_sections - 1)
+        formatted_image = np.zeros((formatted_height, section_width), dtype=np.uint8)
+
+        for i in range(num_sections):
+            start_x = i * threshold
+            end_x = min(start_x + threshold, width)
+            section = stitched_image[:, start_x:end_x]
+
+            start_y = i * (height + padding)
+            formatted_image[start_y + padding:start_y + padding + height, padding:padding + section.shape[1]] = section
+
+        formatted_image_path = os.path.join(os.path.dirname(self.stitched_directory_image), "formatted_stitched.png")
+        cv2.imwrite(formatted_image_path, formatted_image)
+        print(f"Formatted stitched image saved as {formatted_image_path}")
+        return formatted_image_path
+
+
+    def convert_to_pdf(self, image_path):
+        image = Image.open(image_path)
+        pdf_path = image_path.replace(".png", ".pdf")
+        
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
+            print(f"Deleted existing PDF: {pdf_path}")
+        
+        image.convert("RGB").save(pdf_path)
+        print(f"Converted {image_path} to {pdf_path}")
 
 if __name__ == "__main__":
     image_paths = [r"./outputs/real/real_20240618_213201_unique/screenshot_0001.png",
