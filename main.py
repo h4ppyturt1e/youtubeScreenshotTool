@@ -3,6 +3,7 @@ import argparse
 from src.ProcessImages import ProcessImages
 from src.VideoToImages import VideoToImages
 
+
 def main():
     parser = argparse.ArgumentParser(
         description='Process video to images and then sanitize images.')
@@ -18,10 +19,10 @@ def main():
                         help='Similarity level for removing duplicates (0.0 to 1.0)', default=0.8)
     parser.add_argument('--unique', type=int,
                         help='Removes duplicate images (0 or 1)')
-
-    parser.add_argument('--start-time', type=str, help='Start capturing at a specified time. Format: MINUTES:SECONDS', default=None)
-    parser.add_argument('--end-time', type=str, help='End capturing screenshots at this time. Format: MINUTES:SECONDS ', default=None)
-
+    parser.add_argument('--start-time', type=str,
+                        help='Start capturing at a specified time. Format: MINUTES:SECONDS', default=None)
+    parser.add_argument('--end-time', type=str,
+                        help='End capturing screenshots at this time. Format: MINUTES:SECONDS ', default=None)
 
     args = parser.parse_args()
 
@@ -29,8 +30,6 @@ def main():
     interval = args.interval
     output_base_dir = "./outputs"
     output_name = args.output_name
-
-
 
     video_to_images = VideoToImages(
         youtube_url, interval, os.path.join(output_base_dir, output_name), output_name, args.start_time, args.end_time)
@@ -42,6 +41,7 @@ def main():
                                     similarity_level=float(args.sim), force_unique=bool(args.unique))
 
     print("Finished processing images...")
+
 
 if __name__ == "__main__":
     main()

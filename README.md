@@ -18,9 +18,9 @@ This project captures screenshots from a YouTube video at specified intervals an
 
 Stitch consecutive images together based on feature matching.
 
-- Original Images: ![Original Images](assets/imgMatchOriginal.png)
-- Feature Matches: ![Feature Matches](assets/imgMatchFeatureMatches.png)
-- Stitched Image: ![Stitched Image](assets/imgMatchStitched.png)
+- Original Images: ![Original Images](assets/ImageMatchingExamples/plot_images.png)
+- Feature Matches: ![Feature Matches](assets/ImageMatchingExamples/plot_feature_matching.png)
+- Stitched Image: ![Stitched Image](assets/ImageMatchingExamples/plot_stitched_image.png)
 
 ## Installation
 
@@ -49,17 +49,19 @@ Stitch consecutive images together based on feature matching.
 - `--gray`: Optional. Do grayscale conversion (0 or 1).
 - `--sim`: Optional. Similarity level for removing duplicates (0.0 to 1.0). Default is 0.8.
 - `--unique`: Optional. Removes duplicate images (0 or 1).
+- `--start-time`: Optional. Start capturing at a specified time (MM:SS)
+- `--end-time`: Optional. End capturing at a specified time (MM:SS)
 
 1. Run the script with the required arguments:
 
    ```sh
-   python script_name.py <youtube_url> <interval> <output_name> [--gray <0 or 1>] [--sim <similarity_level>] [--unique <0 or 1>]
+   python main.py <youtube_url> <interval> <output_name> [--gray <0 or 1>] [--sim <similarity_level>] [--unique <0 or 1>] [--start-time <MM:SS>] [--end-time <MM:SS>]
    ```
 
    For example:
 
    ```sh
-   python script_name.py "https://www.youtube.com/watch?v=ZrV8YYwKvSs" 2 "remember_me_coco" --gray 1 --sim 0.8 --unique 1
+   python main.py "https://www.youtube.com/watch?v=ZrV8YYwKvSs" 2 "remember_me_coco" --gray 1 --unique 1 
    ```
 
    Output:
