@@ -5,6 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter
 from PIL import Image
+import json
+
 
 class ImageMatching:
     """Matches and stitches two images together"""
@@ -66,7 +68,8 @@ class ImageMatching:
         rounded_shifts = np.round(horizontal_shifts).astype(int)
         shift_counter = Counter(rounded_shifts)
         # print(shift_counter.most_common(3))
-        self.most_common_shift = shift_counter.most_common(3)[self.use_top_n][0]
+        self.most_common_shift = shift_counter.most_common(3)[
+            self.use_top_n][0]
 
         filtered_matches = [m for i, m in enumerate(
             self.matches) if rounded_shifts[i] == self.most_common_shift]
@@ -96,12 +99,12 @@ class ImageMatching:
         else:
             x1, y1 = self.manual_override[0], 0
             x2, y2 = self.manual_override[1], 0
-            print(f"    Manually overrided (relative to stitched image) to: ({x1:.1f}, {y1:.1f}) and ({x2:.1f}, {y2:.1f})")
-        
-        
+            print(
+                f"    Manually overrided (relative to stitched image) to: ({x1:.1f}, {y1:.1f}) and ({x2:.1f}, {y2:.1f})")
+
         cropped_img1 = self.images[0][:, :int(x1)]
         cropped_img2 = self.images[1][:, int(x2):]
-        
+
         if do_plot:
             print(
                 f"Stitching starts at img1: ({x1:.1f}, {y1:.1f}) and img2: ({x2:.1f}, {y2:.1f})")
@@ -181,60 +184,44 @@ class StitchDirectory:
         self.image_paths = sorted([os.path.join(directory, f) for f in os.listdir(
             directory) if f.endswith(('.png', '.jpg', '.jpeg'))])
         print(f"Found {len(self.image_paths)} images in {directory}")
-        self.overlap_overrides = {}
-        self.top_n_overrides = {}
-        self.manual_overrides = {}
-        self.get_overrides()
-    
-    def get_overrides(self):
-        overrides_path = os.path.join(self.directory, "overrides.txt")
-        if not os.path.exists(overrides_path):
-            print("No overrides.txt file found.")
-            return
-        
-        with open(overrides_path, "r") as f:
-            lines = f.readlines()
-            for line in lines:
-                image_number, values = line.strip().split(" - ")
-                
-                if "(" in values:
-                    split_values = values.split(", ")
-                    manual_override = split_values[-1][1:-1].split(":")
-                    self.manual_overrides[int(image_number)] = (int(manual_override[0]), int(manual_override[1]))
-                
-                elif "," in values:
-                    split_values = values.split(", ")
-                    overlap_region, top_n = split_values[0], split_values[1]
-                    self.overlap_overrides[int(image_number)] = int(overlap_region)
-                    self.top_n_overrides[int(image_number)] = int(top_n)
-                else:
-                    self.overlap_overrides[int(image_number)] = int(values)
-            
-        # print(f"Overrides: {self.overrides}")
-    
-    def set_override(self, image_number, overlap_region=None, top_n=None, manual_override=None):
-        overrides_path = os.path.join(self.directory, "overrides.txt")
-        
-        if manual_override:
-            print(f"Setting manual override on image #{image_number} to {manual_override}")
-        else:
-            print(f"Setting overlap region on image #{image_number} to {overlap_region} pixels") if overlap_region else None
-            print(f"Setting top matches on image #{image_number} to {top_n}") if top_n else None
-        
-        self.overlap_overrides[image_number] = overlap_region
-        with open(overrides_path, "w") as f:
-            for cur_img_number, overlap_region in self.overlap_overrides.items():
-                f.write(f"{cur_img_number} - {overlap_region}")
-                if top_n:
-                    f.write(f", {top_n}")
-                if manual_override and image_number == cur_img_number:
-                    # read image length
-                    img = Image.open(self.directory + f"/screenshot_{str(image_number).zfill(4)}.png")
-                    width, _ = img.size
-                    f.write(f", (-{width - manual_override[0]}:{manual_override[1]})")
-                f.write("\n")
+        self.stitch_params = None
+        self.get_stitch_params()
 
-        
+    def get_stitch_params(self):
+        overrides_path = os.path.join(self.directory, "stitch_params.json")
+        if not os.path.exists(overrides_path):
+            print("No stitch_params.json file found. Creating a new one.")
+            self.stitch_params = {}
+            with open(overrides_path, "w") as f:
+                json.dump(self.stitch_params, f, indent=4)
+
+        with open(overrides_path, "r") as f:
+            self.stitch_params = json.load(f)
+
+    def set_stitch_params(self, image_number, overlap_region=None, top_n=None, manual_override=None):
+        if not self.stitch_params:
+            self.get_stitch_params()
+
+        if str(image_number) in self.stitch_params:
+            print(
+                f"Overriding existing values for image #{image_number} with new values")
+            self.stitch_params[str(image_number)].update({
+                "overlap_region": overlap_region,
+                "top_n": top_n,
+                "manual_override": manual_override
+            })
+        else:
+            print(f"Adding new override values for image #{image_number}")
+            self.stitch_params[str(image_number)] = {
+                "overlap_region": overlap_region,
+                "top_n": top_n,
+                "manual_override": manual_override
+            }
+
+        overrides_path = os.path.join(self.directory, "stitch_params.json")
+        with open(overrides_path, "w") as f:
+            json.dump(self.stitch_params, f, indent=4)
+
     def delete_temp_files(self):
         temp_output_path = os.path.join(self.directory, "temp_stitched.png")
         final_output_path = os.path.join(self.directory, "final_stitched.png")
@@ -245,70 +232,73 @@ class StitchDirectory:
                     # print(f"Removed {file_path}")
             except Exception as e:
                 print(f"Error removing {file_path}: {e}")
-    
+
     def stitch_images(self, do_plot=True):
         if len(self.image_paths) < 2:
             print("Not enough images to stitch.")
             return
-        
+
         self.delete_temp_files()
 
         current_image_path = self.image_paths[0]
         for next_image_path in self.image_paths[1:]:
-            match = re.search(r'screenshot_(\d+)\.png', os.path.basename(next_image_path))
+            match = re.search(r'screenshot_(\d+)\.png',
+                              os.path.basename(next_image_path))
             image_number = int(match.group(1))
-            
+
             overlap_region = self.overlap_region
             top_n = 0
-            
-            if image_number not in self.manual_overrides:
-                if image_number in self.overlap_overrides:
-                    overlap_region = self.overlap_overrides.get(image_number, self.overlap_region)
-                    print(f"    Overrided to {overlap_region} between {os.path.basename(current_image_path)} and {os.path.basename(next_image_path)}")
+            manual_override = None
 
-                if image_number in self.top_n_overrides:
-                    top_n = self.top_n_overrides.get(image_number, 0)
-                    print(f"    Overrided to top {top_n} between {os.path.basename(current_image_path)} and {os.path.basename(next_image_path)}")
+            cur_overrides = self.stitch_params.get(image_number, {})
 
-                manual_override = None
-            else:
-                print(f"Manual override enabled for image #{image_number}. Ignoring feature matching.")
-                manual_override = self.manual_overrides[image_number]
+            if cur_overrides:
+                overlap_region = cur_overrides.get("overlap_region", overlap_region)
+                top_n = cur_overrides.get("top_n", top_n)
+                manual_override = cur_overrides.get("manual_override", manual_override)
+
+                print(f"Processing image {image_number} with overlap_region={overlap_region}, top_n={top_n}, manual_override={manual_override}")
+                
             matcher = ImageMatching(
                 [current_image_path, next_image_path], overlap_region, use_top_n=top_n, manual_override=manual_override)
-            
-                
+
             stitched_image = matcher.stitch_images(do_plot=do_plot)
 
             # Save the stitched image temporarily
-            temp_output_path = os.path.join(self.directory, "temp_stitched.png")
+            temp_output_path = os.path.join(
+                self.directory, "temp_stitched.png")
             cv2.imwrite(temp_output_path, stitched_image)
 
             current_image_path = temp_output_path
-            
+
         parent_dir = os.path.abspath(os.path.join(self.directory, os.pardir))
         final_output_path = os.path.join(parent_dir, "final_stitched.png")
         if os.path.exists(final_output_path):
             os.remove(final_output_path)
         os.rename(current_image_path, final_output_path)
         print(f"Final stitched image saved as {final_output_path}")
-        
+
         self.delete_temp_files()
-        
+
         self.stitched_directory_image = final_output_path
 
     def format_stitched_image(self, threshold=1000, padding=20):
-        stitched_image = cv2.imread(self.stitched_directory_image, cv2.IMREAD_GRAYSCALE)
+        stitched_image = cv2.imread(
+            self.stitched_directory_image, cv2.IMREAD_GRAYSCALE)
         if stitched_image is None:
-            raise ValueError(f"Failed to load stitched image at {self.stitched_directory_image}")
-        
+            raise ValueError(
+                f"Failed to load stitched image at {self.stitched_directory_image}")
+
         height, width = stitched_image.shape
-        num_sections = (width + threshold - 1) // threshold  # Round up division
+        # Round up division
+        num_sections = (width + threshold - 1) // threshold
 
         section_width = threshold + 2 * padding
         section_height = height + 2 * padding
-        formatted_height = section_height * num_sections - padding * (num_sections - 1)
-        formatted_image = np.zeros((formatted_height, section_width), dtype=np.uint8)
+        formatted_height = section_height * \
+            num_sections - padding * (num_sections - 1)
+        formatted_image = np.zeros(
+            (formatted_height, section_width), dtype=np.uint8)
 
         for i in range(num_sections):
             start_x = i * threshold
@@ -316,24 +306,26 @@ class StitchDirectory:
             section = stitched_image[:, start_x:end_x]
 
             start_y = i * (height + padding)
-            formatted_image[start_y + padding:start_y + padding + height, padding:padding + section.shape[1]] = section
+            formatted_image[start_y + padding:start_y + padding +
+                            height, padding:padding + section.shape[1]] = section
 
-        formatted_image_path = os.path.join(os.path.dirname(self.stitched_directory_image), "formatted_stitched.png")
+        formatted_image_path = os.path.join(os.path.dirname(
+            self.stitched_directory_image), "formatted_stitched.png")
         cv2.imwrite(formatted_image_path, formatted_image)
         print(f"Formatted stitched image saved as {formatted_image_path}")
         return formatted_image_path
 
-
     def convert_to_pdf(self, image_path):
         image = Image.open(image_path)
         pdf_path = image_path.replace(".png", ".pdf")
-        
+
         if os.path.exists(pdf_path):
             os.remove(pdf_path)
             print(f"Deleted existing PDF: {pdf_path}")
-        
+
         image.convert("RGB").save(pdf_path)
         print(f"Converted {image_path} to {pdf_path}")
+
 
 if __name__ == "__main__":
     image_paths = [r"./outputs/real/real_20240618_213201_unique/screenshot_0001.png",

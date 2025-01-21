@@ -197,6 +197,11 @@ class ProcessImages:
         for image_path, _ in self.grayscaled_images:
             os.remove(image_path)
         os.rmdir(f"{self.input_directory}_grayscale")
+        
+        print("Deleting intermediate directories...")
+        for f in os.listdir(self.input_directory):
+            os.remove(os.path.join(self.input_directory, f))
+        os.rmdir(f"{self.input_directory}")
 
         print(f"Found {len(self.unique_images)} unique images out of {len(self.original_images)} total images.")
 
