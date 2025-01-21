@@ -1,6 +1,6 @@
 import os
 import cv2
-from pytube import YouTube
+from pytubefix import YouTube
 from datetime import datetime
 
 
@@ -23,7 +23,8 @@ class VideoToImages:
         return self.output_dir
 
     def download_video(self):
-        yt = YouTube(self.youtube_url)
+        yt = YouTube(self.youtube_url, use_po_token=True)
+        yt.po_token_verifier
         video = yt.streams.filter(
             progressive=True, file_extension='mp4').first()
         self.video_path = video.download(filename='temp_video.mp4')

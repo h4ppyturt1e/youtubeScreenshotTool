@@ -2,7 +2,7 @@ import os
 import argparse
 from src.ProcessImages import ProcessImages
 from src.VideoToImages import VideoToImages
-from src.ImageMatching import StitchDirectory  # Make sure to update your import path accordingly
+from src.ImageMatching import StitchDirectory
 
 
 def main():
@@ -10,7 +10,7 @@ def main():
         description='Process video to images and then sanitize images.')
     parser.add_argument('youtube_url', type=str,
                         help='URL of the YouTube video')
-    parser.add_argument('interval', type=int,
+    parser.add_argument('interval', type=float,
                         help='Interval in seconds for capturing screenshots')
     parser.add_argument('output_name', type=str,
                         help='Name of the output directory')
@@ -27,7 +27,7 @@ def main():
     parser.add_argument('--stitch', type=int,
                         help='Enable stitching of images (0 or 1)', default=1)
     parser.add_argument('--overlap', type=int,
-                        help='Overlap region for stitching', default=300)
+                        help='Overlap region for stitching', default=200)
     parser.add_argument('--threshold', type=int,
                         help='Threshold for formatting stitched image', default=1000)
     parser.add_argument('--padding', type=int,
